@@ -1,17 +1,36 @@
 import streamlit as st
 import pandas as pd
-import tempfile, os, io, datetime
-from src.parser import extract_text_from_pdf_bytes
-from src.matcher import load_skill_list, extract_candidate_skills, match_skills, suggest_bullets, build_report_md
-from src.parser import extract_text_from_pdf_bytes
+import io
+import datetime
 import pdfplumber
 
-def extract_text_from_pdf_bytes(pdf_bytes):
+from src.matcher import (
+    load_skill_list,
+    extract_candidate_skills,
+    match_skills,
+    suggest_bullets,
+    build_report_md,
+)
+
+
+# ✅ Fixed: works on both localhost & Streamlit Cloud
+def extract_text_from_pdf(uploaded_file):
+    """
+    Extract text from a PDF uploaded via Streamlit.
+    Handles both UploadedFile objects and raw bytes.
+    """
+    if hasattr(uploaded_file, "read"):
+        file_bytes = uploaded_file.read()   # UploadedFile
+    else:
+        file_bytes = uploaded_file          # Already bytes
+
     text = ""
-    with pdfplumber.open(pdf_bytes) as pdf:
+    with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
         for page in pdf.pages:
-            text += page.extract_text() or ""
-    return text
+            page_text = page.extract_text()
+            if page_text:
+                text += page_text + "\n"
+    return text.strip()
 
 
 st.set_page_config(page_title="AI-Powered Resume Analyzer", layout="wide")
@@ -29,7 +48,6 @@ with st.sidebar:
     4. Review **Matched/Missing skills** and **Score**.
 
     5. **Download report** (Markdown).
-
     """)
     st.caption("Tip: Edit `skills/skill_list.json` to tune detection.")
 
@@ -61,11 +79,9 @@ with col2:
     st.subheader("Results")
 
     if uploaded_file is not None:
-        # Read bytes once
-        file_bytes = uploaded_file.getvalue()
         with st.spinner("Extracting text from PDF..."):
             try:
-                resume_text = extract_text_from_pdf_bytes(file_bytes)
+                resume_text = extract_text_from_pdf(uploaded_file)   # ✅ fixed
                 st.session_state.resume_text = resume_text
             except Exception as e:
                 st.error(f"Failed to parse PDF: {e}")
