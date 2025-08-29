@@ -1,11 +1,9 @@
-from typing import List
+import io
 import fitz  # PyMuPDF
 
-def extract_text_from_pdf_bytes(file_bytes: bytes) -> str:
-    """Extract plain text from a PDF given as bytes using PyMuPDF."""
-    text_chunks: List[str] = []
-    with fitz.open(stream=file_bytes, filetype="pdf") as doc:
+def extract_text_from_pdf_bytes(file_bytes):
+    with fitz.open(stream=io.BytesIO(file_bytes), filetype="pdf") as doc:
+        text = ""
         for page in doc:
-            page_text = page.get_text("text") or ""
-            text_chunks.append(page_text)
-    return "\n".join(text_chunks)
+            text += page.get_text()
+    return text
