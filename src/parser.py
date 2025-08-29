@@ -1,11 +1,12 @@
-import fitz  # PyMuPDF
+import io
+import pdfplumber
 
-def extract_text_from_pdf_bytes(file_obj):
-    try:
-        with fitz.open(stream=file_obj.read(), filetype="pdf") as doc:
-            text = ""
-            for page in doc:
-                text += page.get_text()
-        return text
-    except Exception as e:
-        return f"Failed to parse PDF: {e}"
+def extract_text_from_pdf_bytes(file_bytes):
+    text = ""
+    # Wrap bytes in BytesIO so pdfplumber can seek
+    with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
+        for page in pdf.pages:
+            page_text = page.extract_text()
+            if page_text:
+                text += page_text + "\n"
+    return text.strip()
