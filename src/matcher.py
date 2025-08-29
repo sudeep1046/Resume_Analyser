@@ -1,10 +1,19 @@
-import re, json
+import re, json, os
 from typing import List, Dict
 from rapidfuzz import fuzz
 
-def load_skill_list(path: str = "skills/skill_list.json") -> List[str]:
+def load_skill_list(path: str = None) -> List[str]:
+    """
+    Load skills list from skills/skill_list.json.
+    Works both locally and on Streamlit Cloud by using an absolute path.
+    """
+    if path is None:
+        base_dir = os.path.dirname(os.path.abspath(__file__))  # points to src/
+        path = os.path.join(base_dir, "..", "skills", "skill_list.json")
+
     with open(path, "r", encoding="utf-8") as f:
         skills = json.load(f)
+
     # normalize
     skills = [s.strip().lower() for s in skills if s.strip()]
     # de-duplicate while preserving order
