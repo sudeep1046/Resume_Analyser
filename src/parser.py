@@ -1,18 +1,11 @@
-import io
 import fitz  # PyMuPDF
 
-def extract_text_from_pdf_bytes(file_bytes: bytes) -> str:
-    """
-    Extract text from a PDF given as bytes.
-    
-    :param file_bytes: PDF file content in bytes
-    :return: Extracted text as a string
-    """
-    text = ""
+def extract_text_from_pdf_bytes(file_obj):
     try:
-        with fitz.open(stream=io.BytesIO(file_bytes), filetype="pdf") as doc:
+        with fitz.open(stream=file_obj.read(), filetype="pdf") as doc:
+            text = ""
             for page in doc:
-                text += page.get_text("text") + "\n"
+                text += page.get_text()
+        return text
     except Exception as e:
-        print(f"Error reading PDF: {e}")
-    return text.strip()
+        return f"Failed to parse PDF: {e}"
